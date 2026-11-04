@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Manu Exam Centre Module 2 - Data Analysis with Python student result lookup.">
+<title>Manu Exam Centre | Module 2 Python Results</title>
+<style>
+:root{--green:#138a45;--green2:#0b6331;--red:#c62828;--black:#111;--white:#fff;--muted:#68736c;--line:#e1e8e3;--soft:#f3f8f4}
+*{box-sizing:border-box}
+body{margin:0;background:#f3f6f3;color:var(--black);font-family:Arial,Helvetica,sans-serif;line-height:1.5}
+header{background:var(--black);color:var(--white);padding:25px 16px 22px;text-align:center;border-bottom:6px solid var(--green)}
+.brand{font-weight:900;letter-spacing:1.5px;font-size:clamp(22px,4vw,32px)}
+.brand span{color:#54c77c}
+.module{color:#fff;font-size:14px;margin-top:7px}
+.wrap{max-width:760px;margin:28px auto;padding:0 16px 30px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 8px 25px rgba(0,0,0,.05)}
+h1{font-size:22px;margin:0 0 8px}
+.intro{color:var(--muted);margin:0 0 18px;font-size:14px}
+label{font-weight:700;display:block;margin:12px 0 7px}
+.searchrow{display:flex;gap:9px}
+input{min-width:0;flex:1;padding:14px;border:1px solid #bac9bf;border-radius:9px;font-size:16px;outline-color:var(--green)}
+button{border:0;border-radius:9px;padding:13px 18px;font-size:15px;font-weight:700;cursor:pointer}
+.primary{background:var(--green);color:#fff}.primary:hover{background:var(--green2)}
+.secondary{background:#eef3ef;color:var(--black);border:1px solid var(--line)}
+.danger{background:var(--red);color:#fff}
+.small{font-size:12px;color:var(--muted);margin-top:8px}
+#message{margin-top:16px}
+.matches{display:grid;gap:8px;margin-top:12px}
+.match{border:1px solid var(--line);padding:12px;border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.match strong{overflow-wrap:anywhere}
+.confirm{margin-top:16px;padding:16px;background:var(--soft);border:1px solid #cfe4d4;border-radius:12px}
+.confirm-actions{display:flex;gap:9px;margin-top:12px;flex-wrap:wrap}
+.result{margin-top:20px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+.result-head{background:var(--green2);color:#fff;padding:18px}
+.result-head .eyebrow{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;opacity:.9}
+.result-head h2{font-size:23px;margin:4px 0}
+.result-head p{margin:0;font-size:13px;opacity:.9}
+.result-body{padding:18px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.stat{background:var(--soft);border-radius:10px;padding:12px;text-align:center}
+.stat b{display:block;font-size:23px;color:var(--green2)}
+.stat span{font-size:11px;color:var(--muted)}
+.grade{display:inline-block;background:#e4f5e9;color:var(--green2);font-weight:800;border-radius:20px;padding:5px 12px;margin-top:12px}
+table{width:100%;border-collapse:collapse;margin-top:16px;font-size:14px}
+th,td{padding:11px 9px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--muted);font-size:12px}
+td:last-child,th:last-child{text-align:right}
+.notice{padding:14px;border-radius:10px;background:#fff4f4;border:1px solid #f0caca;color:#822020}
+.result-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+footer strong{color:var(--green2)}
+.hidden{display:none!important}
+@media(max-width:520px){.searchrow{flex-direction:column}.searchrow button{width:100%}.panel{padding:17px}.stats{grid-template-columns:repeat(3,1fr)}.stat b{font-size:19px}.match{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">MANU <span>EXAM CENTRE</span></div>
+  <div class="module">MODULE 2 · DATA ANALYSIS WITH PYTHON</div>
+</header>
+<main class="wrap">
+<section class="panel">
+  <h1>Student Examination Results</h1>
+  <p class="intro">Enter any part of your name (first, middle or surname). Confirm your full name before viewing your result.</p>
+  <label for="studentSearch">Search your name</label>
+  <div class="searchrow">
+    <input id="studentSearch" type="text" autocomplete="off" placeholder="e.g. Mary, Wanjiku or Mary Wanjiku">
+    <button class="primary" id="searchBtn">Search</button>
+  </div>
+  <div class="small">Search is case-insensitive. If more than one name matches, select your full name from the list.</div>
+  <div id="message" aria-live="polite"></div>
+  <div id="confirmBox" class="confirm hidden">
+    <div class="small">PLEASE CONFIRM YOUR IDENTITY</div>
+    <h2 id="confirmName" style="margin:5px 0"></h2>
+    <div id="confirmGender"></div>
+    <div class="confirm-actions">
+      <button class="primary" id="yesBtn">Yes, this is my name</button>
+      <button class="secondary" id="noBtn">No, go back</button>
+    </div>
+  </div>
+  <div id="resultBox" class="result hidden"></div>
+</section>
+</main>
+<footer>© <span id="year"></span> <strong>donjm.online</strong> · Manu Exam Centre</footer>
+<script>
+const STUDENTS = [{"name":"Abidan Kimutai","gender":"Male","q1":4.5,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.5,"percentage":98.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Adonijah Eugene Omondi","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"AHMED MOHAMED ABDULLAHI","gender":"Male","q1":5.0,"q2":5.0,"q3":4.5,"q4":10.0,"total":24.5,"percentage":98.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Ainda Sharon Asiko","gender":"Female","q1":4.5,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.5,"percentage":98.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Albanus Kioko","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Alice Wanjiru Njoroge","gender":"Female","q1":4.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.0,"percentage":96.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Alicia Ashubwe","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Antone Odhiambo","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Ashley Nthenya Musyoka","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Benson Bulimu","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Billy Onyango Odiwuor","gender":"Male","q1":4.25,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.25,"percentage":97.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Blanchelle Mutanu","gender":"Female","q1":4.0,"q2":4.25,"q3":5.0,"q4":10.0,"total":23.25,"percentage":93.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Blessings Musimbi Mande","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"BRADLEY ANURO","gender":"Male","q1":4.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.0,"percentage":96.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Brian Mburu Mutua","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Brian Obuya","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Candy Obuya","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Chrispine Karanja Wawerup","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Claudin Cherono","gender":"Female","q1":4.5,"q2":5.0,"q3":4.5,"q4":10.0,"total":24.0,"percentage":96.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Clinton Adagala","gender":"Male","q1":4.5,"q2":3.4,"q3":3.25,"q4":10.0,"total":21.15,"percentage":84.6,"grade":"A","performance":"Excellent","status":"available"},{"name":"Comfort Omuchesia Mwanga","gender":"Female","q1":4.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.0,"percentage":96.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Courtney Ndumi Munguti","gender":"Female","q1":5.0,"q2":5.0,"q3":4.5,"q4":10.0,"total":24.5,"percentage":98.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Damaris Cyrilla Matere","gender":"Female","q1":4.5,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.5,"percentage":98.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Eddah Jepchumba Kipkorir","gender":"Female","q1":4.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.0,"percentage":96.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Eddie Mukhongo","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Edward Obiero","gender":"Male","q1":4.5,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.5,"percentage":98.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Ellinah B Orina","gender":"Female","q1":4.5,"q2":3.5,"q3":5.0,"q4":10.0,"total":23.0,"percentage":92.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Elon Kipngeno","gender":"Male","q1":2.75,"q2":5.0,"q3":5.0,"q4":5.0,"total":17.75,"percentage":71.0,"grade":"B","performance":"Very Good","status":"available"},{"name":"Eric Paswa","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Esther Maturu","gender":"Female","q1":null,"q2":null,"q3":null,"q4":null,"total":null,"percentage":null,"grade":"—","performance":"Result pending","status":"pending"},{"name":"Faith Kahendi","gender":"Female","q1":4.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.0,"percentage":96.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Faith Katumbi Nzengete","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Faith Ndungwa Mwanzi","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Francis Aondo Onami","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Glory Mukami","gender":"Female","q1":3.5,"q2":5.0,"q3":5.0,"q4":7.5,"total":21.0,"percentage":84.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Gratsher Michelle","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Hafsa mohamed","gender":"Female","q1":4.5,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.5,"percentage":98.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Hilda Ogoro","gender":"Female","q1":4.5,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.5,"percentage":98.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Hope Nasisho Shakei","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Ibrae Fugicha Guyo","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Ikram Mohamed","gender":"Female","q1":4.5,"q2":4.25,"q3":5.0,"q4":10.0,"total":23.75,"percentage":95.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"IMMACULATE GECHEMBA PIUS","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"IMMACULATE NJERI KIMANI","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Jacob Jongroor Madul Garang","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Jamillah Faraj","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Janet kinyanjui","gender":"Female","q1":4.0,"q2":5.0,"q3":5.0,"q4":5.0,"total":19.0,"percentage":76.0,"grade":"B","performance":"Very Good","status":"available"},{"name":"Jasmine Zipoorah Wanjiru Gathungu","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Jeff Kelly Omollo","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Jephers Okero Isoe","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Jeremiah Ojwang","gender":"Male","q1":4.5,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.5,"percentage":98.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"JERRY JEBOR CHELANGAT","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"John kyalo Kingoto","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"John Mandila","gender":"Male","q1":4.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.0,"percentage":96.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Johnmark Otieno","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Joy Chebet Kipkorir","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Juma Caroline Moraa","gender":"Female","q1":1.25,"q2":5.0,"q3":5.0,"q4":10.0,"total":21.25,"percentage":85.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Karwitha Brenda","gender":"Female","q1":4.5,"q2":5.0,"q3":5.0,"q4":6.0,"total":20.5,"percentage":82.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Kelvin Kihonge Wamaitha","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Kelvin Kipngetich Kemoi","gender":"Male","q1":3.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":23.0,"percentage":92.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Keziah Gituma","gender":"Female","q1":4.5,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.5,"percentage":98.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Lance Barrack","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Lawrence Muchanju Irungu","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Lucy Kemunto Mandere","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Mahmoud Nagib Mohamed","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Margaret Nyambura","gender":"Female","q1":4.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.0,"percentage":96.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Marion Joy Ouma","gender":"Female","q1":4.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.0,"percentage":96.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Mary Wayua Mutisya","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Marymercy Mukuhi","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Matilda Sachina","gender":"Female","q1":4.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.0,"percentage":96.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Maxwell Mwariri Munene","gender":"Male","q1":3.0,"q2":3.0,"q3":5.0,"q4":3.5,"total":14.5,"percentage":58.0,"grade":"D","performance":"Average","status":"available"},{"name":"Melanie Boiyon","gender":"Female","q1":1.75,"q2":3.5,"q3":5.0,"q4":10.0,"total":20.25,"percentage":81.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"MERCY NDUNGE MULWA","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Mercy Wanjira Ruhiu","gender":"Female","q1":3.75,"q2":5.0,"q3":2.5,"q4":10.0,"total":21.25,"percentage":85.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Meverline Kwamboka Onserio","gender":"Female","q1":2.25,"q2":5.0,"q3":5.0,"q4":5.0,"total":17.25,"percentage":69.0,"grade":"C","performance":"Good","status":"available"},{"name":"Michelle Karobia","gender":"Female","q1":5.0,"q2":4.25,"q3":5.0,"q4":10.0,"total":24.25,"percentage":97.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Michelle Mueni Onyango","gender":"Female","q1":3.25,"q2":3.5,"q3":0.0,"q4":5.0,"total":11.75,"percentage":47.0,"grade":"E","performance":"Below Average","status":"available"},{"name":"Mitchelle Musangi Mulei","gender":"Female","q1":5.0,"q2":5.0,"q3":4.5,"q4":10.0,"total":24.5,"percentage":98.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Miting Vincent","gender":"Male","q1":4.5,"q2":5.0,"q3":4.5,"q4":10.0,"total":24.0,"percentage":96.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Mucheke Nkuri Kirima","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Mugasia Bravian","gender":"Male","q1":4.5,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.5,"percentage":98.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Mukuria Brian Ngunjiri","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Mukuria Rejoice Wangari","gender":"Female","q1":4.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.0,"percentage":96.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Murithi Victor Nyaga","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Muriu Edwin Karogo","gender":"Male","q1":5.0,"q2":5.0,"q3":4.5,"q4":10.0,"total":24.5,"percentage":98.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Mwero Sonia","gender":"Female","q1":4.5,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.5,"percentage":98.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Nadia Mogambi","gender":"Female","q1":4.5,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.5,"percentage":98.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"NANCY WAIRIMU MBUGUA","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Newton Mumbura","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"njure mercy njeri","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Nyaga Claire Purity Gathoni","gender":"Female","q1":5.0,"q2":3.4,"q3":2.5,"q4":10.0,"total":20.9,"percentage":83.6,"grade":"A","performance":"Excellent","status":"available"},{"name":"OMEGA SAMMY NEVIL","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Patience Ndanu Vetu","gender":"Female","q1":3.0,"q2":5.0,"q3":0.0,"q4":10.0,"total":18.0,"percentage":72.0,"grade":"B","performance":"Very Good","status":"available"},{"name":"Patrick Mutugi Njeru","gender":"Male","q1":4.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.0,"percentage":96.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Pauline Ochieng","gender":"Female","q1":4.5,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.5,"percentage":98.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Peace Kathina Mavuti","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Philip Sotero Mandere","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Polycarp Muturi Muchiri","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"PRICILLA MOKEIRA MOGENI","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Purity Mutanu","gender":"Female","q1":5.0,"q2":4.25,"q3":5.0,"q4":10.0,"total":24.25,"percentage":97.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Ray David Benard","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"REBECCA BILHA","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Richard lomayian somoire","gender":"Male","q1":5.0,"q2":5.0,"q3":4.0,"q4":10.0,"total":24.0,"percentage":96.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"RONNIE KIMIYA LUGAKA","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Roy Anachoni","gender":"Male","q1":1.75,"q2":3.5,"q3":0.0,"q4":5.0,"total":10.25,"percentage":41.0,"grade":"E","performance":"Below Average","status":"available"},{"name":"Ruth Joy Kemunto","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"RYAN MUTHOMI MUTUURA","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Salma Abdi Buuhow","gender":"Female","q1":3.5,"q2":5.0,"q3":5.0,"q4":10.0,"total":23.5,"percentage":94.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Samuel Mumo Wambua","gender":"Male","q1":3.5,"q2":5.0,"q3":5.0,"q4":5.0,"total":18.5,"percentage":74.0,"grade":"B","performance":"Very Good","status":"available"},{"name":"Shalom Lily Wambui Wanjagi","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Shalton Miruka","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Shanti Katua","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Simon Chege","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Sophia Ngina Mbugua","gender":"Female","q1":4.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.0,"percentage":96.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Stacy Kerubo","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"stacy wanjiru wagura","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Stanley Munyao Kyalo","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"STEPHEN OCHIENG","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Sylvia Mbira","gender":"Female","q1":4.0,"q2":3.4,"q3":3.25,"q4":10.0,"total":20.65,"percentage":82.6,"grade":"A","performance":"Excellent","status":"available"},{"name":"TIFFANY AWUOR OWUOR","gender":"Female","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Tom Densely","gender":"Male","q1":3.5,"q2":5.0,"q3":5.0,"q4":10.0,"total":23.5,"percentage":94.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"TYRONE AMERE ASHIEMBI","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"valentine kanini","gender":"Female","q1":5.0,"q2":5.0,"q3":2.5,"q4":10.0,"total":22.5,"percentage":90.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"VICTOR MBOGO KIMANI","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Victor Njoroge","gender":"Male","q1":3.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":23.0,"percentage":92.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Virginia Wambui  Mwaniki","gender":"Female","q1":4.5,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.5,"percentage":98.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Wanza Victoria Mutheu","gender":"Female","q1":4.5,"q2":5.0,"q3":5.0,"q4":10.0,"total":24.5,"percentage":98.0,"grade":"A","performance":"Excellent","status":"available"},{"name":"Whitney Winsley Okoth","gender":"Male","q1":5.0,"q2":5.0,"q3":5.0,"q4":10.0,"total":25.0,"percentage":100.0,"grade":"A","performance":"Excellent","status":"available"}];
+const searchInput=document.getElementById('studentSearch');
+const message=document.getElementById('message');
+const confirmBox=document.getElementById('confirmBox');
+const confirmName=document.getElementById('confirmName');
+const confirmGender=document.getElementById('confirmGender');
+const resultBox=document.getElementById('resultBox');
+let selectedStudent=null;
+
+document.getElementById('year').textContent=new Date().getFullYear();
+function normalise(s){return s.toLocaleLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();}
+function clearViews(){message.innerHTML='';confirmBox.classList.add('hidden');resultBox.classList.add('hidden');resultBox.innerHTML='';selectedStudent=null;}
+function findMatches(query){
+  const q=normalise(query);
+  if(!q)return [];
+  const parts=q.split(/\s+/).filter(Boolean);
+  return STUDENTS.filter(s=>{
+    const name=normalise(s.name);
+    return name.includes(q) || parts.every(p=>name.split(' ').some(token=>token.includes(p)));
+  });
+}
+function showConfirm(student){
+  selectedStudent=student;
+  confirmName.textContent=student.name;
+  confirmGender.textContent='Gender: '+student.gender;
+  confirmBox.classList.remove('hidden');
+  resultBox.classList.add('hidden');
+  confirmBox.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function search(){
+  clearViews();
+  const q=searchInput.value.trim();
+  if(!q){message.textContent='Please enter at least part of your name.';return;}
+  const found=findMatches(q);
+  if(found.length===0){message.textContent='No matching student was found. Check the spelling or try another part of your name.';return;}
+  if(found.length===1){showConfirm(found[0]);return;}
+  message.innerHTML='<strong>'+found.length+' matching names found.</strong> Select your full name to continue.';
+  const list=document.createElement('div');list.className='matches';
+  found.forEach(student=>{
+    const item=document.createElement('div');item.className='match';
+    const label=document.createElement('strong');label.textContent=student.name+' · '+student.gender;
+    const btn=document.createElement('button');btn.className='secondary';btn.textContent='Select';
+    btn.addEventListener('click',()=>showConfirm(student));
+    item.append(label,btn);list.appendChild(item);
+  });
+  message.appendChild(list);
+}
+function safe(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function showResult(s){
+  confirmBox.classList.add('hidden');
+  resultBox.classList.remove('hidden');
+  if(s.status==='pending'){
+    resultBox.innerHTML=`<div class="result-head"><div class="eyebrow">Manu Exam Centre · Module 2</div><h2>${safe(s.name)}</h2><p>Gender: ${safe(s.gender)}</p></div>
+    <div class="result-body"><div class="notice"><strong>Result not available yet.</strong><br>Your registration details were found, but no matching examination submission file was included in the files provided for assessment. Please contact the exam administrator to verify your submission.</div></div>`;
+    return;
+  }
+  resultBox.innerHTML=`<div class="result-head"><div class="eyebrow">Official student result · Module 2</div><h2>${safe(s.name)}</h2><p>Gender: ${safe(s.gender)} · Data Analysis with Python</p></div>
+  <div class="result-body">
+    <div class="stats">
+      <div class="stat"><b>${Number(s.total).toFixed(1)}/25</b><span>Total Marks</span></div>
+      <div class="stat"><b>${Number(s.percentage).toFixed(1)}%</b><span>Percentage</span></div>
+      <div class="stat"><b>${safe(s.grade)}</b><span>Grade</span></div>
+    </div>
+    <div class="grade">${safe(s.performance)}</div>
+    <table><thead><tr><th>Assessment area</th><th>Marks</th></tr></thead><tbody>
+      <tr><td>Q1 · Load and inspect dataset</td><td>${Number(s.q1).toFixed(1)} / 5</td></tr>
+      <tr><td>Q2 · Sales analysis</td><td>${Number(s.q2).toFixed(1)} / 5</td></tr>
+      <tr><td>Q3 · Branch and category comparison</td><td>${Number(s.q3).toFixed(1)} / 5</td></tr>
+      <tr><td>Q4 · Matplotlib and Seaborn visualisation</td><td>${Number(s.q4).toFixed(1)} / 10</td></tr>
+    </tbody></table>
+    <div class="result-actions"><button class="primary" id="downloadBtn">Download Result Image</button><button class="secondary" id="newSearchBtn">Search Another Student</button></div>
+    <div class="small">Assessment total: 25 marks, converted to a percentage out of 100.</div>
+  </div>`;
+  document.getElementById('downloadBtn').addEventListener('click',()=>downloadResultImage(s));
+  document.getElementById('newSearchBtn').addEventListener('click',()=>{clearViews();searchInput.value='';searchInput.focus();});
+}
+function downloadResultImage(s){
+  const canvas=document.createElement('canvas');
+  const w=1100,h=1200,ctx=canvas.getContext('2d');
+  canvas.width=w;canvas.height=h;
+  ctx.fillStyle='#f3f6f3';ctx.fillRect(0,0,w,h);
+  ctx.fillStyle='#111111';ctx.fillRect(0,0,w,190);
+  ctx.fillStyle='#138a45';ctx.fillRect(0,180,w,10);
+  ctx.textAlign='center';
+  ctx.fillStyle='#ffffff';ctx.font='bold 48px Arial';ctx.fillText('MANU EXAM CENTRE',w/2,82);
+  ctx.fillStyle='#54c77c';ctx.font='bold 30px Arial';ctx.fillText('MODULE 2 · DATA ANALYSIS WITH PYTHON',w/2,137);
+  ctx.fillStyle='#ffffff';ctx.fillRect(65,225,970,820);
+  ctx.strokeStyle='#dce6de';ctx.lineWidth=3;ctx.strokeRect(65,225,970,820);
+  ctx.fillStyle='#0b6331';ctx.fillRect(65,225,970,165);
+  ctx.fillStyle='#ffffff';ctx.font='bold 25px Arial';ctx.fillText('STUDENT EXAMINATION RESULT',w/2,275);
+  ctx.font='bold 43px Arial';
+  let name=s.name;
+  if(ctx.measureText(name).width>850){ctx.font='bold 34px Arial';}
+  ctx.fillText(name,w/2,335);
+  ctx.font='24px Arial';ctx.fillText('Gender: '+s.gender,w/2,370);
+  const cards=[{x:100,label:'TOTAL MARKS',value:Number(s.total).toFixed(1)+'/25'},{x:420,label:'PERCENTAGE',value:Number(s.percentage).toFixed(1)+'%'},{x:740,label:'GRADE',value:s.grade}];
+  cards.forEach(c=>{
+    ctx.fillStyle='#f0f7f1';ctx.fillRect(c.x,440,260,150);
+    ctx.fillStyle='#5d6b60';ctx.font='bold 19px Arial';ctx.fillText(c.label,c.x+130,482);
+    ctx.fillStyle='#0b6331';ctx.font='bold 42px Arial';ctx.fillText(c.value,c.x+130,548);
+  });
+  ctx.textAlign='left';ctx.fillStyle='#111';ctx.font='bold 27px Arial';ctx.fillText('QUESTION BREAKDOWN',115,665);
+  const lines=[
+    ['Q1 · Load and inspect dataset',Number(s.q1).toFixed(1)+' / 5'],
+    ['Q2 · Sales analysis',Number(s.q2).toFixed(1)+' / 5'],
+    ['Q3 · Branch and category comparison',Number(s.q3).toFixed(1)+' / 5'],
+    ['Q4 · Matplotlib and Seaborn visualisation',Number(s.q4).toFixed(1)+' / 10']
+  ];
+  ctx.font='25px Arial';
+  lines.forEach((line,i)=>{
+    const y=725+i*66;ctx.fillStyle=i%2===0?'#f6f8f6':'#ffffff';ctx.fillRect(105,y-35,890,55);
+    ctx.fillStyle='#222';ctx.fillText(line[0],125,y);
+    ctx.textAlign='right';ctx.font='bold 25px Arial';ctx.fillStyle='#0b6331';ctx.fillText(line[1],970,y);ctx.textAlign='left';ctx.font='25px Arial';
+  });
+  ctx.textAlign='center';ctx.fillStyle='#0b6331';ctx.font='bold 26px Arial';ctx.fillText(s.performance,w/2,1010);
+  ctx.fillStyle='#111';ctx.font='20px Arial';ctx.fillText('© donjm.online',w/2,1120);
+  ctx.fillStyle='#66736a';ctx.font='16px Arial';ctx.fillText('Keep this image for your personal record.',w/2,1155);
+  const a=document.createElement('a');a.download='Manu_Exam_Result_'+s.name.trim().replace(/[^a-z0-9]+/gi,'_')+'.png';a.href=canvas.toDataURL('image/png');a.click();
+}
+document.getElementById('searchBtn').addEventListener('click',search);
+searchInput.addEventListener('keydown',e=>{if(e.key==='Enter')search();});
+document.getElementById('yesBtn').addEventListener('click',()=>{if(selectedStudent)showResult(selectedStudent);});
+document.getElementById('noBtn').addEventListener('click',()=>{confirmBox.classList.add('hidden');selectedStudent=null;searchInput.focus();});
+</script>
+</body>
+</html>
